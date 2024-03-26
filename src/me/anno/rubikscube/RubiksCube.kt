@@ -15,11 +15,17 @@ import me.anno.engine.ui.render.PlayMode
 import me.anno.engine.ui.render.RenderMode
 import me.anno.engine.ui.render.RenderView1
 import me.anno.engine.ui.render.SceneView
+import me.anno.engine.ui.render.SceneView.Companion.testScene
 import me.anno.extensions.ExtensionLoader
 import me.anno.io.files.Reference.getReference
 import me.anno.mesh.vox.meshing.BlockSide
+import me.anno.rubikscube.api.CubeAPI
+import me.anno.rubikscube.api.sample.CheckerBoardPattern
+import me.anno.rubikscube.api.sample.CubeNotationPattern
 import me.anno.ui.base.groups.PanelStack
 import me.anno.ui.debug.PureTestEngine.Companion.testPureUI
+import me.anno.ui.debug.TestEngine.Companion.testUI3
+import me.anno.utils.structures.lists.Lists.firstInstance
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import org.joml.Vector3i
@@ -43,6 +49,8 @@ lateinit var cubes: List<Entity>
 lateinit var cubesOrigins: List<Vector3d>
 lateinit var scene: Entity
 
+val randomizedSlices = 6
+
 /**
  * Sets up the game, and then lets you play it.
  * */
@@ -59,16 +67,18 @@ fun main() {
     cubesOrigins = cubes.map { Vector3d(it.position) }
     slices = BlockSide.entries // depending on what cube you have, you need to change this
         .map { side ->
-            val dir = Vector3d(Vector3i(side.x, side.y, side.z))
-            RotationSlice(Quaterniond().rotateAxis(PI / 2, dir)) { cube ->
-                cube.position.dot(dir) > 0.5
+            val dir0 = Vector3i(side.x, side.y, side.z)
+            val dir = Vector3d(dir0)
+            RotationSlice(Quaterniond().rotateAxis(PI / 2, dir), dir0) { cube ->
+                cube.dot(dir) > 0.5
             }
         } + BlockSide.entries
         .filter { it.x + it.y + it.z > 0 }
         .map { side ->
-            val dir = Vector3d(Vector3i(side.x, side.y, side.z))
-            RotationSlice(Quaterniond().rotateAxis(PI / 2, dir)) { cube ->
-                abs(cube.position.dot(dir)) < 0.5
+            val dir0 = Vector3i(side.x, side.y, side.z)
+            val dir = Vector3d(dir0)
+            RotationSlice(Quaterniond().rotateAxis(PI / 2, dir), dir0) { cube ->
+                abs(cube.dot(dir)) < 0.5
             }
         }
 
@@ -78,20 +88,33 @@ fun main() {
     // add animated sky (default sky isn't animated)
     scene.add(Skybox())
 
-    testPureUI("Rubik's Cube") {
-        EngineBase.enableVSync = true // we don't need all fps ^^
-        sceneView = SceneView(RenderView1(PlayMode.PLAYING, scene, style), style)
-        val controls = OrbitControls()
-        controls.needsClickToRotate = true
-        controls.rotateLeft = false
-        controls.rotateRight = true
-        scene.add(CameraController.setup(controls, sceneView.renderer))
-        scene.getComponentInChildren(Camera::class)!!.fovY = 60f
-        sceneView.renderer.renderMode = RenderMode.FORWARD
-        val ui = PanelStack(style)
-        ui.add(sceneView)
-        ui.add(ShowSolvedPanel(style))
-        ui.add(TurnCounterUI(style))
-        ui
+    scene.add(CubeAPI())
+    scene.add(CheckerBoardPattern())
+    scene.add(CubeNotationPattern())
+
+    if (false) {
+        testPureUI("Rubik's Cube") {
+            EngineBase.enableVSync = true // we don't need all fps ^^
+            sceneView = SceneView(RenderView1(PlayMode.PLAYING, scene, style), style)
+            val controls = OrbitControls()
+            controls.needsClickToRotate = true
+            controls.rotateLeft = false
+            controls.rotateRight = true
+            scene.add(CameraController.setup(controls, sceneView.renderer))
+            scene.getComponentInChildren(Camera::class)!!.fovY = 60f
+            sceneView.renderer.renderMode = RenderMode.FORWARD
+            val ui = PanelStack(style)
+            ui.add(sceneView)
+            ui.add(ShowSolvedPanel(style))
+            ui.add(TurnCounterUI(style))
+            ui
+        }
+    } else {
+        testUI3("Rubik's Cube") {
+            EngineBase.enableVSync = true // we don't need all fps ^^
+            val ui = testScene(scene)
+            sceneView = ui.listOfAll.firstInstance()
+            ui
+        }
     }
 }

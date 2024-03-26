@@ -10,3 +10,10 @@ The controls are mouse-based only at the moment.
 - To turn your camera, move your mouse while pressing the right mouse button.
 - To turn a slice of the cube, drag from what cube you want to start from, and where you want it to end.
 If there are multiple possibilities, it will choose one randomly (not recommended).
+
+## API: Write your own solver/patterns
+There is a subpackage, and component called CubeAPI, where you can control the cube.
+The sample package shows how to create a component, and then just add an instance of it in RubiksCube.kt to the variable "scene".
+You can then find it in the UI, and edit any variables and run any @DebugAction functions.
+
+There is two sample classes in api/sample, copy them, and make them your own 😊.

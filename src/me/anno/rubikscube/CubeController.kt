@@ -10,12 +10,30 @@ import me.anno.engine.serialization.NotSerializedProperty
 import me.anno.maths.Maths.MILLIS_TO_NANOS
 import me.anno.utils.pooling.JomlPools
 import org.joml.Quaterniond
+import kotlin.math.abs
 import kotlin.random.Random
 
 /**
  * Implements turning slices of the cube
  * */
 class CubeController : Component() {
+
+    companion object {
+        fun getTransform(axis: RotationSlice, times: Int): Quaterniond {
+            val axisTimes = Quaterniond()
+            for (i in 0 until abs(times)) {
+                axisTimes.mul(axis.rotation)
+            }
+            if (times < 0) {
+                axisTimes.conjugate()
+            }
+            return axisTimes
+        }
+
+        fun rotateCube(child: Entity, axisTimes: Quaterniond) {
+            child.transform.setGlobal(child.transform.globalTransform.rotateLocal(axisTimes))
+        }
+    }
 
     @Docs("How many rotations are applied for shuffling")
     var shuffling = 100
@@ -32,7 +50,7 @@ class CubeController : Component() {
         val axis = slices.getOrNull(axisIndex) ?: return
         val slerpTime = 100 * MILLIS_TO_NANOS
         val axisTimes = getTransform(axis, times)
-        val cubesOnSide = cubes.filter(axis.filter)
+        val cubesOnSide = cubes.filter { axis.filter(it.position) }
         if (smoothly) {
             for (child in cubesOnSide) {
                 child.transform.teleportUpdate(Time.gameTimeN - slerpTime)
@@ -49,24 +67,12 @@ class CubeController : Component() {
         }
     }
 
-    private fun rotateCube(child: Entity, axisTimes: Quaterniond) {
-        child.transform.setGlobal(child.transform.globalTransform.rotateLocal(axisTimes))
-    }
-
-    fun getTransform(axis: RotationSlice, times: Int): Quaterniond {
-        val axisTimes = Quaterniond()
-        for (i in 0 until times) {
-            axisTimes.mul(axis.rotation)
-        }
-        return axisTimes
-    }
-
     @DebugAction
     fun shuffle() {
         // apply random rotations
         val random = Random(Time.gameTimeN)
         for (i in 0 until shuffling) {
-            rotate(random.nextInt(slices.size), random.nextInt(3) + 1, false)
+            rotate(random.nextInt(randomizedSlices), random.nextInt(3) + 1, false)
         }
         // update transforms
         for (cube in cubes) {
