@@ -93,6 +93,7 @@ fun main() {
     scene.add(CubeNotationPattern())
 
     if (false) {
+        // show nice player UI
         testPureUI("Rubik's Cube") {
             EngineBase.enableVSync = true // we don't need all fps ^^
             sceneView = SceneView(RenderView1(PlayMode.PLAYING, scene, style), style)
@@ -110,6 +111,7 @@ fun main() {
             ui
         }
     } else {
+        // show editor UI to test components, functions, patterns and such
         testUI3("Rubik's Cube") {
             EngineBase.enableVSync = true // we don't need all fps ^^
             val ui = testScene(scene)
